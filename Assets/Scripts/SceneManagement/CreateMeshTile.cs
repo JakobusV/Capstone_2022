@@ -13,7 +13,12 @@ public class CreateMeshTile : MonoBehaviour
     {
         mesh = new Mesh();
         GetComponent<MeshFilter>().mesh = mesh;
+
         DrawFilled();
+
+        MeshCollider mc = GetComponent<MeshCollider>();
+        mc.sharedMesh = mesh;
+        mc.convex = true;
     }
 
     void Update()

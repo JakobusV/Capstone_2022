@@ -1,110 +1,134 @@
-using System;
-using System.Collections;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using UnityEngine;
+using System.Threading.Tasks;
 
-public class LFF : Algorithm
+public class CellularAutomata_Simple : CLA
 {
-    public System.Random Random { get; set; } = new System.Random();
     public Tile[,] Tiles { get; set; }
-    public float Chance { get; set; } = 100f;
-    public float Decay { get; set; } = .98f;
-    public Stack<Tile> Deque { get; set; } = new Stack<Tile>();
-    private int[] Start { get; set; }
+    public int Loop { get; set; } = 3;
 
-    public Tile[,] Run(int X, int Y)
-    {
-        Start = new int[2] { Y, X };
-
-        return Run();
-    }
-    public Tile[,] Run(int Both_X_Y)
-    {
-        Start = new int[2] { Both_X_Y, Both_X_Y };
-
-        return Run();
-    }
     public Tile[,] Run()
     {
-        if (Start == null)
+        if (Tiles == null)
         {
-            Start = new int[2] { Tiles.GetLength(0) / 2, Tiles.GetLength(1) / 2 };
+            GenerateRandomGrid();
         }
 
-        Tile startTile = Tiles[Start[0], Start[1]];
-
-        startTile.Visitied = true;
-
-        startTile.Chance = Chance;
-
-        Deque.Push(startTile);
-
-        LazyFloodFill();
+        for (int i = 0; i < Loop; i++)
+        {
+            Tiles = PreformCA();
+        }
 
         return Tiles;
     }
-
-    private void LazyFloodFill()
+    public Tile[,] PreformCA()
     {
-        while (Deque.Count > 0)
+        Tile[,] newGrid = new Tile[Tiles.GetLength(0), Tiles.GetLength(1)];
+
+        for (int X = 0; X < Tiles.GetLength(1); X++)
         {
-            // Pop and Fill Tile from Deque
-            Tile focusTile = Deque.Pop();
-            focusTile.Value = 1;
-
-            // If Chance >= Random
-            if (focusTile.Chance >= Random.Next(0, 101))
+            for (int Y = 0; Y < Tiles.GetLength(0); Y++)
             {
-                // Get neighbors not visited
-                List<Tile> neighbors = GetNeighbors(focusTile);
+                // Tile from original grid
+                Tile tile = Tiles[Y, X];
 
-                // Select all that are not visited
-                neighbors = neighbors.Where(t => !t.Visitied).ToList();
+                // List of neighboring tiles to original Grid's tile
+                List<Tile> list = MooreNeighborhood(tile);
 
-                // Decrease Chance by Decay factor
-                Chance = focusTile.Chance * Decay;
+                // Get ZeroValueCount
+                int ZeroValueCount = list.Where(t => t.Value == 0).Count();
 
-                // For each neighbor
-                foreach (Tile tile in neighbors)
+                // If tile is on an edge it will result in less than 8 tiles
+                if (list.Count != 8)
                 {
-                    // Add neighbors to Deque
-                    Deque.Push(tile);
-
-                    // Set neighbors as "Visited"
-                    tile.Visitied = true;
-
-                    // Set Chance as current chance
-                    tile.Chance = Chance;
+                    // Add the difference as walls
+                    ZeroValueCount += 8 - list.Count;
                 }
+
+                // New Tile for new grid
+                Tile newTile = new Tile()
+                {
+                    X = tile.X,
+                    Y = tile.Y,
+                    Value = (ZeroValueCount > 4) ? 0 : 1,
+                    Visitied = tile.Visitied,
+                    Chance = tile.Chance
+                };
+
+                newGrid[Y, X] = newTile;
             }
         }
+
+        return newGrid;
     }
 
-    private List<Tile> GetNeighbors(Tile tile)
+    public List<Tile> MooreNeighborhood(Tile tile)
     {
-        List<Tile> neightbors = new List<Tile>();
+        List<Tile> neighbors = new List<Tile>();
+        bool x_left = false, x_right = false;
 
-        if (tile.Y > 0)
-        {
-            neightbors.Add(Tiles[tile.Y - 1, tile.X]);
-        }
         if (tile.X > 0)
         {
-            neightbors.Add(Tiles[tile.Y, tile.X - 1]);
-        }
-        if (tile.Y < Tiles.GetLength(0) - 1)
-        {
-            neightbors.Add(Tiles[tile.Y + 1, tile.X]);
+            neighbors.Add(Tiles[tile.Y, tile.X - 1]);
+            x_left = true;
         }
         if (tile.X < Tiles.GetLength(1) - 1)
         {
-            neightbors.Add(Tiles[tile.Y, tile.X + 1]);
+            neighbors.Add(Tiles[tile.Y, tile.X + 1]);
+            x_right = true;
+        }
+        if (tile.Y > 0)
+        {
+            if (x_left)
+            {
+                neighbors.Add(Tiles[tile.Y - 1, tile.X - 1]);
+            }
+            neighbors.Add(Tiles[tile.Y - 1, tile.X]);
+            if (x_right)
+            {
+                neighbors.Add(Tiles[tile.Y - 1, tile.X + 1]);
+            }
+        }
+        if (tile.Y < Tiles.GetLength(0) - 1)
+        {
+            if (x_left)
+            {
+                neighbors.Add(Tiles[tile.Y + 1, tile.X - 1]);
+            }
+            neighbors.Add(Tiles[tile.Y + 1, tile.X]);
+            if (x_right)
+            {
+                neighbors.Add(Tiles[tile.Y + 1, tile.X + 1]);
+            }
         }
 
-        return neightbors;
+        return neighbors;
+    }
+
+    public void GenerateRandomGrid()
+    {
+        System.Random Random = new System.Random();
+
+        for (int i = 0; i < Tiles.Length; i++)
+        {
+            int X = i % Tiles.GetLength(1);
+            int Y = i / Tiles.GetLength(0);
+            Tile tile = new Tile()
+            {
+                X = X,
+                Y = Y,
+                Value = Random.Next(2)
+            };
+            Tiles[Y, X] = tile;
+        }
+    }
+
+    public string GetFileType()
+    {
+        return ".cas";
     }
 
     public Tile[,] Read(string file)
@@ -254,10 +278,17 @@ public class LFF : Algorithm
 
         // Write out file
         File.WriteAllText(filePath.ToString(), fileBuilder.ToString());
-    }
 
-    public string GetFileType()
-    {
-        return ".lff";
+
+        /*StringBuilder stringBuilder = new StringBuilder();
+        for (int X = 0; X < Tiles.GetLength(1); X++)
+        {
+            for (int Y = 0; Y < Tiles.GetLength(0); Y++)
+            {
+                stringBuilder.Append(Tiles[Y, X].Value.ToString());
+            }
+            stringBuilder.Append("\n");
+        }
+        File.WriteAllText(file, stringBuilder.ToString());*/
     }
 }
