@@ -14,8 +14,8 @@ public class ManagerControl : MonoBehaviour
     public int Size = 10;
     public float Decay = 0.9f;
     public uint CellularAutomataLoops = 2;*/
-    public bool isReading;
-    public string fileName;
+    public static bool isReading;
+    public static string fileName;
 
     /*public static bool isExisting;
     public static string fileType;*/
@@ -53,9 +53,10 @@ public class ManagerControl : MonoBehaviour
         // Complete
         spectacle.grid.Build(spectacle.texture);
 
-        // Player
-            // Make Player
-            // Apply Player
+        // Make Player
+        GameObject Player_Camera = Instantiate(Resources.Load("Prefabs/Player_Camera_Bundle") as GameObject);
+
+        // Apply Player
             // Play...?
     }
 
@@ -82,5 +83,30 @@ public class ManagerControl : MonoBehaviour
         }
 
         return algorithm;
+    }
+
+    public static bool FileTypeExist(string fileType)
+    {
+        bool doesExist = false;
+        
+        switch (fileType)
+        {
+            case "lff":
+                doesExist = true;
+                break;
+            case "cas":
+                doesExist = true;
+                break;
+            case "cac":
+                doesExist = true;
+                break;
+            case "dsq":
+                doesExist = true;
+                break;
+            default:
+                break;
+        }
+
+        return doesExist;
     }
 }
