@@ -1,3 +1,4 @@
+using Assets.Scripts.PlayerControls;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -62,6 +63,11 @@ public class MainMenuController : MonoBehaviour
     public void ResetLabel(GameObject ErrorLabel)
     {
         ErrorLabel.GetComponent<TMP_Text>().text = "";
+    }
+
+    public void SavePreferences()
+    {
+        PlayerPreferences.Write();
     }
 
     public void QuitGame()

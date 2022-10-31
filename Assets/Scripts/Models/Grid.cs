@@ -152,6 +152,9 @@ public class Grid
         Renderer.material.mainTexture = CustomTexture;
         Renderer.transform.localScale = new Vector3(1, 1, 1);
         // Renderer.transform.localScale = new Vector3(CustomTexture.width, (CustomTexture.width + CustomTexture.height) / 2, CustomTexture.height);
+
+        // Set layer to Ground
+        gameObject.layer = 6;
     }
 
     public void Display_Tiles(GameObject gameObject, Material material)
