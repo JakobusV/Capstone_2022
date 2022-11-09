@@ -54,3 +54,5 @@ crashlytics-build.properties
 ./Prefs
 Prefs/PlayerPreferences.txt
 Saves/kelle.dsq
+*.lff
+Saves/

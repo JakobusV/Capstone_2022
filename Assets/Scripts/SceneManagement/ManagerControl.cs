@@ -1,3 +1,4 @@
+using Assets.Scripts.PlayerControls;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -29,6 +30,8 @@ public class ManagerControl : MonoBehaviour
 
     void Run()
     {
+        // Pause
+
         // Create Spectacle
         spectacle = new Spectacle();
 
@@ -39,7 +42,7 @@ public class ManagerControl : MonoBehaviour
         spectacle.algorithm = GetAlgorithmByFileType(fileDetails[1]);
 
         // Make Grid
-        if (isReading && File.Exists("Saves/" + fileName))
+        if (isReading && File.Exists(PlayerStatus.GetSavePath() + fileName))
         {
             spectacle.GenerateGridFromFile(fileDetails[0]);
         } else
@@ -50,6 +53,12 @@ public class ManagerControl : MonoBehaviour
         // Make Texture
         spectacle.GenerateTexture();
 
+        // Create PNG bytes
+        byte[] pngBytes = spectacle.texture.EncodeToPNG();
+
+        // Create PNG
+        File.WriteAllBytes(PlayerStatus.GetSavePath() + fileName + ".png", pngBytes);
+
         // Complete
         spectacle.grid.Build(spectacle.texture);
 
@@ -57,7 +66,9 @@ public class ManagerControl : MonoBehaviour
         GameObject Player_Camera = Instantiate(Resources.Load("Prefabs/Player_Camera_Bundle") as GameObject);
 
         // Apply Player
-            // Play...?
+
+
+        // Resume
     }
 
     private Algorithm GetAlgorithmByFileType(string fileType)
@@ -77,6 +88,9 @@ public class ManagerControl : MonoBehaviour
                 break;
             case "dsq":
                 algorithm = new DS();
+                break;
+            case "bsp":
+                algorithm = new BSPR();
                 break;
             default:
                 throw new System.FormatException("File type of \"." + fileType + "\" not found.");
@@ -101,6 +115,9 @@ public class ManagerControl : MonoBehaviour
                 doesExist = true;
                 break;
             case "dsq":
+                doesExist = true;
+                break;
+            case "bsp":
                 doesExist = true;
                 break;
             default:

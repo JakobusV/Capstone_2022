@@ -1,111 +1,36 @@
-using Assets.Scripts.PlayerControls;
+﻿using Assets.Scripts.PlayerControls;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using UnityEngine;
+using System.Threading.Tasks;
 
-public class LFF : Algorithm
+public class BSPR : Algorithm
 {
-    public System.Random Random { get; set; } = new System.Random();
+    private float Deviation { get; set; }
+    private int SplitIterations { get; set; }
     public Tile[,] Tiles { get; set; }
-    public float Chance { get; set; } = 100f;
-    public float Decay { get; set; } = .98f;
-    public Stack<Tile> Deque { get; set; } = new Stack<Tile>();
-    private int[] Start { get; set; }
 
-    public Tile[,] Run(int X, int Y)
+    public BSPR()
     {
-        Start = new int[2] { Y, X };
-
-        return Run();
+        SplitIterations = 4; // 3
+        Deviation = 0.1f;
     }
-    public Tile[,] Run(int Both_X_Y)
+
+    public string GetFileType()
     {
-        Start = new int[2] { Both_X_Y, Both_X_Y };
-
-        return Run();
+        return ".bsp";
     }
+
     public Tile[,] Run()
     {
-        if (Start == null)
-        {
-            Start = new int[2] { Tiles.GetLength(0) / 2, Tiles.GetLength(1) / 2 };
-        }
+        int[] Origin = { 0, 0 };
 
-        Tile startTile = Tiles[Start[0], Start[1]];
+        BinarySpacePartitioningNode bspNode = new BinarySpacePartitioningNode(Tiles, SplitIterations, Origin);
+        bspNode.Perform();
 
-        startTile.Visitied = true;
-
-        startTile.Chance = Chance;
-
-        Deque.Push(startTile);
-
-        LazyFloodFill();
-
-        return Tiles;
-    }
-
-    private void LazyFloodFill()
-    {
-        while (Deque.Count > 0)
-        {
-            // Pop and Fill Tile from Deque
-            Tile focusTile = Deque.Pop();
-            focusTile.Value = 1;
-
-            // If Chance >= Random
-            if (focusTile.Chance >= Random.Next(0, 101))
-            {
-                // Get neighbors not visited
-                List<Tile> neighbors = GetNeighbors(focusTile);
-
-                // Select all that are not visited
-                neighbors = neighbors.Where(t => !t.Visitied).ToList();
-
-                // Decrease Chance by Decay factor
-                Chance = focusTile.Chance * Decay;
-
-                // For each neighbor
-                foreach (Tile tile in neighbors)
-                {
-                    // Add neighbors to Deque
-                    Deque.Push(tile);
-
-                    // Set neighbors as "Visited"
-                    tile.Visitied = true;
-
-                    // Set Chance as current chance
-                    tile.Chance = Chance;
-                }
-            }
-        }
-    }
-
-    private List<Tile> GetNeighbors(Tile tile)
-    {
-        List<Tile> neightbors = new List<Tile>();
-
-        if (tile.Y > 0)
-        {
-            neightbors.Add(Tiles[tile.Y - 1, tile.X]);
-        }
-        if (tile.X > 0)
-        {
-            neightbors.Add(Tiles[tile.Y, tile.X - 1]);
-        }
-        if (tile.Y < Tiles.GetLength(0) - 1)
-        {
-            neightbors.Add(Tiles[tile.Y + 1, tile.X]);
-        }
-        if (tile.X < Tiles.GetLength(1) - 1)
-        {
-            neightbors.Add(Tiles[tile.Y, tile.X + 1]);
-        }
-
-        return neightbors;
+        return bspNode.Data;
     }
 
     public Tile[,] Read(string file)
@@ -255,10 +180,5 @@ public class LFF : Algorithm
 
         // Write out file
         File.WriteAllText(filePath.ToString(), fileBuilder.ToString());
-    }
-
-    public string GetFileType()
-    {
-        return ".lff";
     }
 }

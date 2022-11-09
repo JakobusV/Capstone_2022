@@ -1,3 +1,4 @@
+using Assets.Scripts.PlayerControls;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -204,7 +205,7 @@ public class DS : Algorithm
     public Tile[,] Read(string file)
     {
         // Get relative file path
-        StringBuilder filePath = new StringBuilder("Saves/");
+        StringBuilder filePath = new StringBuilder(PlayerStatus.GetSavePath());
         filePath.Append(file);
         filePath.Append(GetFileType());
 
@@ -248,7 +249,7 @@ public class DS : Algorithm
 
     public void Write(string file)
     {
-        StringBuilder filePath = new StringBuilder("Saves/");
+        StringBuilder filePath = new StringBuilder(PlayerStatus.GetSavePath());
         filePath.Append(file);
         filePath.Append(GetFileType());
 

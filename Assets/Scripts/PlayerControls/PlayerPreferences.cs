@@ -11,8 +11,8 @@ namespace Assets.Scripts.PlayerControls
     public static class PlayerPreferences
     {
         private static string filePath = "Prefs/PlayerPreferences.txt";
-        public static float Vertical_Sensitivity = 0.5f;
-        public static float Horizontal_Sensitivity = 0.5f;
+        public static float Vertical_Sensitivity = 2f;
+        public static float Horizontal_Sensitivity = 3f;
         public static float Sound = 1f;
 
         public static void Write()

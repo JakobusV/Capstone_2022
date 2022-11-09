@@ -200,10 +200,39 @@ public class Grid
         }
     }
 
+    /// <summary>
+    /// 2^N grid generation. Default is 2^7, add an int for override.
+    /// </summary>
     public void GenerateTwoNSquareGrid()
     {
         int N = 7;
 
+        int Size = (int)Math.Pow(2, N);
+
+        Size++;
+
+        Tiles = new Tile[Size, Size];
+
+        // Populate Grid
+        for (int i = 0; i < Tiles.Length; i++)
+        {
+            int X = i % Size;
+            int Y = i / Size;
+            Tile tile = new Tile()
+            {
+                X = X,
+                Y = Y
+            };
+            Tiles[Y, X] = tile;
+        }
+    }
+
+    /// <summary>
+    /// 2^N grid generation. Default is 2^7, leave out the int for default.
+    /// </summary>
+    /// <param name="N">Grid will be 2^N</param>
+    public void GenerateTwoNSquareGrid(int N)
+    {
         int Size = (int)Math.Pow(2, N);
 
         Size++;

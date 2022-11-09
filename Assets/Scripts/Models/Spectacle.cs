@@ -31,6 +31,9 @@ public class Spectacle
         } else if (algorithm.GetType() == typeof(DS))
         {
             grid.GenerateTwoNSquareGrid();
+        } else if (algorithm.GetType() == typeof(BSPR))
+        {
+            grid.GenerateTwoNSquareGrid();
         }
 
         algorithm.Tiles = grid.Tiles;

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Assets.Scripts.PlayerControls;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -152,7 +153,7 @@ internal class CellularAutomata_Complex : CLA
     public Tile[,] Read(string file)
     {
         // SB to generate file path
-        StringBuilder filePath = new StringBuilder("Saves/");
+        StringBuilder filePath = new StringBuilder(PlayerStatus.GetSavePath());
         filePath.Append(file);
         filePath.Append(GetFileType());
 
@@ -218,7 +219,7 @@ internal class CellularAutomata_Complex : CLA
 
     public void Write(string file)
     {
-        StringBuilder filePath = new StringBuilder("Saves/");
+        StringBuilder filePath = new StringBuilder(PlayerStatus.GetSavePath());
         filePath.Append(file);
         filePath.Append(GetFileType());
 
