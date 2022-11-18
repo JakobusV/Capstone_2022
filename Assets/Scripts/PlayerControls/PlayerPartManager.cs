@@ -7,25 +7,318 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using Cinemachine;
+using UnityEngine.SceneManagement;
+using TMPro;
+using UnityEngine.UI;
 
 public class PlayerPartManager : MonoBehaviour
 {
-    [SerializeField]
-    private float Health = 10f;
+    public bool DEBUG = true;
+
+    private GameObject GameUI;
+    private HealthSliderControl HealthSlider;
+    private GameObject PauseMenu;
+    private GameObject DEBUG_UI;
+    private GameObject player;
+    private CapsuleCollider player_collider;
+    private int action; //0=idle,1=attack,2=charge,3=sprint
+    private int que_action;
+    private bool isBusy;
+    private bool isAttacking;
+    private bool isCharging;
+    private bool isGrappling;
+    private bool isAttached;
+    private bool isCancelRightClick;
+    private bool isMovingByGrapple;
+    private Vector3 grapple_direction;
 
     public void Start()
     {
+        GameUI = GameObject.Find("GameUI");
+        HealthSlider = GameObject.Find("HealthSlider").GetComponent<HealthSliderControl>();
+        PauseMenu = GameObject.Find("PauseMenu");
+        PauseMenu.SetActive(false);
+        player = GameObject.Find("Player");
+        player_collider = player.GetComponentInChildren<CapsuleCollider>();
+
         SetupPreferences();
         SetupStatus();
     }
 
-    public void Update()
+    public void TakeDamage(float Damage)
     {
-        if (Input.GetKeyDown(KeyCode.B))
+        float HealthLeftover = HealthSlider.GetValue() - Damage;
+
+        // Check if dead?
+        if (HealthLeftover > 0)
         {
-            UpdateStatus();
-            PlayerStatus.Write();
+            // Update UI
+            HealthSlider.SetValue(HealthLeftover);
+        } else
+        {
+            // Die
+
         }
+    }
+
+    private void FixedUpdate()
+    {
+        GrappleCollision();
+    }
+
+    private void GrappleCollision()
+    {
+        if (isGrappling && isAttached)
+        {
+            Collider attachedObjCol = gameObject.GetComponentInChildren<PlayerGrapple>().hit.collider;
+
+            if (attachedObjCol != null && player_collider.bounds.Intersects(attachedObjCol.bounds))
+            {
+                // Try to do reflection but could throw because of missing grapple_direction
+                try
+                {
+                    Ray ray = new Ray(player.transform.position, grapple_direction);
+                    RaycastHit hit;
+                    if (Physics.Raycast(ray, out hit, 2))
+                    {
+                        // Get reflection direciton
+                        Vector3 reflection_direction = Vector3.Reflect(grapple_direction, hit.normal);
+
+                        // Cancel Grapple
+                        CancelGrapple();
+                        action = 0;
+
+                        // Cancel velocity and apply force
+                        Rigidbody rb = player.GetComponent<Rigidbody>();
+                        rb.velocity = new Vector3(0f, 0f, 0f);
+                        rb.AddForce(reflection_direction * 16, ForceMode.Impulse);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError(ex);
+                }
+            }
+        }
+    }
+
+    void Update()
+    {
+        IsPlayerPerforming();
+
+        GrapplePhysics();
+
+        ActionQueManagement();
+
+        UpdateAction();
+
+        PerformAction();
+        gameObject.GetComponentInChildren<PlayerMovement>().SetSpeed(action);
+
+        if (DEBUG)
+        {
+            Debug.Log("action:" + action +
+                "\tque_action:" + que_action +
+                "\tisAttacking:" + isAttacking +
+                "\tisCharging:" + isCharging +
+                "\tisGrappling:" + isGrappling +
+                "\tisAttached:" + isAttached);
+        }
+    }
+
+    private void GrapplePhysics()
+    {
+        if (isGrappling && isAttached)
+        {
+            gameObject.GetComponentInChildren<PlayerMovement>().isGrappling = true;
+            player.GetComponent<Rigidbody>().useGravity = false;
+            Vector3 attachedPoint = (Vector3)gameObject.GetComponentInChildren<PlayerGrapple>().attachedPoint;
+            player.GetComponentInChildren<CapsuleCollider>().isTrigger = true;
+            if (!isMovingByGrapple)
+            {
+                isMovingByGrapple = true;
+
+                // Destination - Origin
+                Vector3 AB = (attachedPoint - player.transform.position);
+                grapple_direction = AB.normalized;
+
+                Rigidbody rb = player.GetComponent<Rigidbody>();
+                rb.velocity = new Vector3(0f, 0f, 0f);
+                rb.AddForce(grapple_direction * 32, ForceMode.Impulse);
+                //rb.velocity = AB.normalized * AB.magnitude;//, ForceMode.Impulse);
+                //rb.velocity = AB;
+            }
+            //player.transform.position = Vector3.Lerp(player.transform.position, (Vector3)attachedPoint, Time.deltaTime);
+        }
+        else
+        {
+            gameObject.GetComponentInChildren<PlayerMovement>().isGrappling = false;
+            player.GetComponent<Rigidbody>().useGravity = true;
+            player.GetComponentInChildren<CapsuleCollider>().isTrigger = false;
+            gameObject.GetComponentInChildren<PlayerGrapple>().attachedPoint = null;
+            isMovingByGrapple = false;
+        }
+    }
+
+    public void CancelGrapple()
+    {
+        //gameObject.GetComponentInChildren<PlayerGrapple>().attachedPoint = null;
+        gameObject.GetComponentInChildren<PlayerGrapple>().isGrappling = false;
+    }
+
+    private void PerformAction()
+    {
+        switch (action)
+        {
+            case 0:
+                gameObject.GetComponentInChildren<PlayerMovement>().Walk();
+                break;
+            case 1:
+                gameObject.GetComponentInChildren<PlayerGrapple>().isCharging = false;
+                gameObject.GetComponentInChildren<PlayerAttack>().TryAttack();
+                gameObject.GetComponentInChildren<PlayerMovement>().Attack();
+                break;
+            case 2:
+                gameObject.GetComponentInChildren<PlayerGrapple>().TryCharge();
+                gameObject.GetComponentInChildren<PlayerMovement>().Charge();
+                break;
+            case 3:
+                gameObject.GetComponentInChildren<PlayerMovement>().Sprint();
+                break;
+            case 4:
+                gameObject.GetComponentInChildren<PlayerGrapple>().isCharging = false;
+                gameObject.GetComponentInChildren<PlayerGrapple>().TryGrapple();
+                gameObject.GetComponentInChildren<PlayerMovement>().Stop();
+                break;
+        }
+    }
+
+    private void UpdateAction()
+    {
+        switch (que_action)
+        {
+            case 0:
+                if (!isBusy)
+                {
+                    action = 0;
+                }
+                break;
+            case 1:
+                if (!isBusy || isCharging || action == 3)
+                {
+                    action = 1;
+                }
+                break;
+            case 2:
+                if ((!isBusy || action == 3) && !isCancelRightClick)
+                {
+                    action = 2;
+                } else if (action == 4)
+                {
+                    isCancelRightClick = true;
+                    CancelGrapple();
+                    action = 0;
+                }
+                break;
+            case 3:
+                if (!isBusy)
+                {
+                    action = 3;
+                }
+                break;
+            case 4:
+                if (isCharging)
+                {
+                    action = 4;
+                } else if (!isAttached)
+                {
+                    CancelGrapple();
+                    action = 0;
+                }
+                break;
+            default:
+                Debug.LogError("que_action switch in PlayerPartManager.UpdateAction() defaulted. que_action:" + que_action);
+                break;
+        }
+    }
+
+    private void ActionQueManagement()
+    {
+        if (isCancelRightClick && Input.GetMouseButtonUp(1))
+        {
+            isCancelRightClick = false;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Space) && isAttached)
+        {
+            CancelGrapple();
+            action = 0;
+
+            gameObject.GetComponentInChildren<PlayerMovement>().Jump();
+        }
+
+        if (Input.GetMouseButton(0))
+        {
+            que_action = 1;
+        }
+        else if (Input.GetMouseButtonDown(1))
+        {
+            que_action = 2;
+        }
+        else if (Input.GetKey(KeyCode.LeftShift))
+        {
+            que_action = 3;
+        }
+        else if (isGrappling)
+        {
+            que_action = 4;
+        }
+        else
+        {
+            que_action = 0;
+        }
+    }
+
+    private void IsPlayerPerforming()
+    {
+        // This can be repetitive but it's easier on the brain in the long run and two extra bools isn't hurting a thing
+
+        // Attack
+        isAttacking = gameObject.GetComponentInChildren<PlayerAttack>().isAttacking;
+
+        // Charging
+        isCharging = gameObject.GetComponentInChildren<PlayerGrapple>().isCharging;
+
+        // Grappling
+        isGrappling = gameObject.GetComponentInChildren<PlayerGrapple>().isGrappling;
+
+        isAttached = gameObject.GetComponentInChildren<PlayerGrapple>().attachedPoint != null;
+
+        if (isAttacking || isCharging || isGrappling)
+        {
+            isBusy = true;
+        } else
+        {
+            isBusy = false;
+        }
+    }
+
+    public void Resume()
+    {
+        PauseMenu.SetActive(false);
+        GameUI.SetActive(true);
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
+    public void Pause()
+    {
+        PauseMenu.SetActive(true);
+        GameUI.SetActive(false);
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
 
     public void SetupPreferences()
@@ -70,7 +363,7 @@ public class PlayerPartManager : MonoBehaviour
             switch (name)
             {
                 case "Health":
-                    Health = (float)value;
+                    HealthSlider.SetValue((float)value);
                     break;
                 case "Move_Speed":
                     gameObject.GetComponentInChildren<PlayerMovement>().moveSpeed = (float)value;
@@ -88,7 +381,7 @@ public class PlayerPartManager : MonoBehaviour
                     tf.position = new Vector3(tf.position.x, tf.position.y, (float)value);
                     break;
                 default:
-                    Debug.Log("IGNORED: " + name + "=" + value);
+                    //Debug.Log("IGNORED: " + name + "=" + value);
                     break;
             }
         }
@@ -108,7 +401,7 @@ public class PlayerPartManager : MonoBehaviour
             switch (name)
             {
                 case "Health":
-                    field.SetValue(null, Health);
+                    field.SetValue(null, HealthSlider.GetValue());
                     break;
                 case "Move_Speed":
                     field.SetValue(null, gameObject.GetComponentInChildren<PlayerMovement>().moveSpeed);
@@ -129,6 +422,29 @@ public class PlayerPartManager : MonoBehaviour
                     Debug.Log("IGNORED: " + name);
                     break;
             }
+        }
+    }
+
+    public void ReturnToMenu()
+    {
+        GameObject manager = GameObject.Find("Manager");
+
+        if (manager != null)
+        {
+            manager.GetComponent<ManagerControl>().ReturnToMainMenu();
+        }
+    }
+
+    public void ResumeFromButton()
+    {
+        GameObject manager = GameObject.Find("Manager");
+
+        if (manager != null)
+        {
+            manager.GetComponent<ManagerControl>().Resume();
+        } else
+        {
+            Resume();
         }
     }
 }

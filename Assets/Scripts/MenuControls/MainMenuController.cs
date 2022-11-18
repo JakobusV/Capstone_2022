@@ -55,6 +55,7 @@ public class MainMenuController : MonoBehaviour
             ManagerControl.fileName = sb.ToString();
 
             // Setup player status
+            PlayerStatus.Default();
             PlayerStatus.Spectacle_Index = sb.ToString();
             PlayerStatus.Spectacle_Path = file;
             PlayerStatus.Write();

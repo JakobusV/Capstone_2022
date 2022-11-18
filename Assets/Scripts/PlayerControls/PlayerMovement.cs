@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,6 +7,11 @@ public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement")]
     public float moveSpeed;
+    public float moveSpeed_Walk = 6;
+    public float moveSpeed_Sprint = 8;
+    public float moveSpeed_Attack = 5;
+    public float moveSpeed_Charge = 3;
+    public float moveSpeed_Stop = 0;
 
     public float groundDrag;
 
@@ -30,6 +36,8 @@ public class PlayerMovement : MonoBehaviour
     Vector3 moveDirection;
 
     Rigidbody rb;
+
+    internal bool isGrappling;
 
     private void Start()
     {
@@ -67,6 +75,8 @@ public class PlayerMovement : MonoBehaviour
         {
             isJumpAvailable = false;
 
+            rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
+
             Jump();
 
             Invoke(nameof(ResetJump), jumpCooldown);
@@ -75,37 +85,85 @@ public class PlayerMovement : MonoBehaviour
 
     private void MovePlayer()
     {
-        moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
+        if (!isGrappling)
+        {
+            moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
 
-        if (isGrounded)
-        {
-            rb.AddForce(moveDirection.normalized * moveSpeed * 10f, ForceMode.Force);
-        } else
-        {
-            rb.AddForce(moveDirection.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force);
+            if (isGrounded)
+            {
+                rb.AddForce(moveDirection.normalized * moveSpeed * 10f, ForceMode.Force);
+            } else
+            {
+                rb.AddForce(moveDirection.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force);
+            }
         }
     }
 
     private void SpeedControl()
     {
-        Vector3 flatVel = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
-
-        if (flatVel.magnitude > moveSpeed)
+        if (!isGrappling)
         {
-            Vector3 limitedVel = flatVel.normalized * moveSpeed;
-            rb.velocity = new Vector3(limitedVel.x, rb.velocity.y, limitedVel.z);
+            Vector3 flatVel = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
+
+            if (flatVel.magnitude > moveSpeed)
+            {
+                Vector3 limitedVel = flatVel.normalized * moveSpeed;
+                rb.velocity = new Vector3(limitedVel.x, rb.velocity.y, limitedVel.z);
+            }
         }
     }
 
-    private void Jump()
+    public void Jump()
     {
-        rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
-
         rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
     }
 
     private void ResetJump()
     {
         isJumpAvailable = true;
+    }
+
+    public void SetSpeed(int action)
+    {
+        switch (action)
+        {
+            case 0:
+                Walk();
+                break;
+            case 1:
+                Attack();
+                break;
+            case 2:
+                Charge();
+                break;
+            case 3:
+                Sprint();
+                break;
+        }
+    }
+
+    public void Sprint()
+    {
+        moveSpeed = moveSpeed_Sprint;
+    }
+
+    public void Walk()
+    {
+        moveSpeed = moveSpeed_Walk;
+    }
+
+    public void Charge()
+    {
+        moveSpeed = moveSpeed_Charge;
+    }
+
+    public void Attack()
+    {
+        moveSpeed = moveSpeed_Attack;
+    }
+
+    public void Stop()
+    {
+        moveSpeed = moveSpeed_Stop;
     }
 }

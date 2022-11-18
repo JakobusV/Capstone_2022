@@ -15,9 +15,9 @@ namespace Assets.Scripts.PlayerControls
         public static float Health = 10f;
         public static float Move_Speed = 6f;
         public static float Jump_Force = 5f;
-        public static float Position_X = 0f;
+        public static float Position_X = 5f;
         public static float Position_Y = 0f;
-        public static float Position_Z = 0f;
+        public static float Position_Z = 5f;
         public static string Spectacle_Path = "default";
         public static string Spectacle_Index = "0.lff";
 
@@ -57,6 +57,18 @@ namespace Assets.Scripts.PlayerControls
 
             // Write out file
             File.WriteAllText(statusPathBuilder.ToString(), stringBuilder.ToString());
+        }
+
+        internal static void Default()
+        {
+            Health = 10f;
+            Move_Speed = 6f;
+            Jump_Force = 5f;
+            Position_X = 5f;
+            Position_Y = 0f;
+            Position_Z = 5f;
+            Spectacle_Path = "default";
+            Spectacle_Index = "0.lff";
         }
 
         public static void Read(string directory)

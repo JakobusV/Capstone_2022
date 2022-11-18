@@ -1,9 +1,11 @@
 using Assets.Scripts.PlayerControls;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class ManagerControl : MonoBehaviour
 {
@@ -17,10 +19,12 @@ public class ManagerControl : MonoBehaviour
     public uint CellularAutomataLoops = 2;*/
     public static bool isReading;
     public static string fileName;
+    public static bool isPaused;
 
     /*public static bool isExisting;
     public static string fileType;*/
     private Spectacle spectacle;
+    private GameObject player;
 
     // Start is called before the first frame update
     void Start()
@@ -28,8 +32,46 @@ public class ManagerControl : MonoBehaviour
         Run();
     }
 
+    private void Update()
+    {
+        PauseControl();
+    }
+
+    private void PauseControl()
+    {
+        if (player != null && Input.GetKeyDown(KeyCode.Tab))
+        {
+            if (isPaused)
+            {
+                Resume();
+            } else
+            {
+                Pause();
+            }
+        }
+    }
+
+    public void Resume()
+    {
+        player.GetComponent<PlayerPartManager>().Resume();
+        Time.timeScale = 1f;
+        isPaused = false;
+    }
+
+    private void Pause()
+    {
+        player.GetComponent<PlayerPartManager>().Pause();
+        player.GetComponent<PlayerPartManager>().UpdateStatus();
+        PlayerStatus.Write();
+        Time.timeScale = 0f;
+        isPaused = true;
+    }
+
     void Run()
     {
+        // Variables
+        bool isNew;
+
         // Pause
 
         // Create Spectacle
@@ -63,12 +105,20 @@ public class ManagerControl : MonoBehaviour
         spectacle.grid.Build(spectacle.texture);
 
         // Make Player
-        GameObject Player_Camera = Instantiate(Resources.Load("Prefabs/Player_Camera_Bundle") as GameObject);
+        player = Instantiate(Resources.Load("Prefabs/Player_Camera_Bundle") as GameObject);
+        player.name = "PlayerCamBundle";
 
         // Apply Player
 
+        // Find all Spawners and activate them.
+        GameObject[] spawners = GameObject.FindGameObjectsWithTag("Spawner");
+        foreach (GameObject spawner in spawners)
+        {
+            spawner.GetComponent<EnemySpawnControl>().Spawn();
+        }
 
         // Resume
+
     }
 
     private Algorithm GetAlgorithmByFileType(string fileType)
@@ -125,5 +175,13 @@ public class ManagerControl : MonoBehaviour
         }
 
         return doesExist;
+    }
+
+    internal void ReturnToMainMenu()
+    {
+        Time.timeScale = 1f;
+        isPaused = false;
+
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex - 1);
     }
 }

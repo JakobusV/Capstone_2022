@@ -35,64 +35,42 @@ public class BSPR : Algorithm
 
     public Tile[,] Read(string file)
     {
-        // SB to generate file path
+        // Get relative file path
         StringBuilder filePath = new StringBuilder(PlayerStatus.GetSavePath());
         filePath.Append(file);
         filePath.Append(GetFileType());
 
-        // SB to generate grid
-        StringBuilder gridBuilder = new StringBuilder();
-
-        // collection of all lines on file
+        // Collection of all lines on file
         string[] Rows = File.ReadAllLines(filePath.ToString());
 
-        // Loop through lines
-        foreach (string Row in Rows)
-        {
-            // Split on .
-            string[] RowBytes = Row.Split('.');
-
-            // Loop through each section
-            foreach (string RowByte in RowBytes)
-            {
-                // Convert string to int
-                int Int = int.Parse(RowByte) + 256;
-
-                // Convert int to binary
-                string Binary = Convert.ToString(Int, 2);
-
-                // Convert binary to string and append gb
-                gridBuilder.Append(Binary.Substring(1));
-            }
-
-            // Append newline delimiter
-            gridBuilder.Append("\n");
-        }
-
-        // Remove final newline
-        gridBuilder.Remove(gridBuilder.Length - 1, 1);
-
-        // New set of now converted rows
-        Rows = gridBuilder.ToString().Split('\n');
-
-        // Setup for LFF object
-        Tiles = new Tile[Rows[0].Length, Rows.Length]; // Could be backwards? 
-
-        // Loop through Rows
+        // Track Y for tiles setup
         for (int Y = 0; Y < Rows.Length; Y++)
         {
-            // Loop through columns
-            for (int X = 0; X < Rows[Y].Length; X++)
-            {
-                // Get value from char --> double --cast-> int
-                int Value = (int)char.GetNumericValue(Rows[X][Y]);
+            // Row in Rows
+            string Row = Rows[Y];
 
-                // Setup tile
+            // Collection of all values in row
+            string[] RowValues = Row.Split(",");
+
+            // Track X for tiles setup
+            for (int X = 0; X < RowValues.Length; X++)
+            {
+                if (X == 0 && Y == 0)
+                {
+                    Tiles = new Tile[Rows.Length, RowValues.Length];
+                }
+
+                // StrValue in RowValues
+                string StrValue = RowValues[X];
+
+                // Convert Value from string to int
+                int Value = int.Parse(StrValue);
+
                 Tiles[Y, X] = new Tile()
                 {
                     X = X,
                     Y = Y,
-                    Value = Value
+                    Value = Value,
                 };
             }
         }
@@ -106,79 +84,26 @@ public class BSPR : Algorithm
         filePath.Append(file);
         filePath.Append(GetFileType());
 
-        // SB to construct file
-        StringBuilder fileBuilder = new StringBuilder();
-        // SB to construct bytes
-        StringBuilder byteBuilder = new StringBuilder();
-        // Keep track of byte length
-        int eightCount = 0;
+        StringBuilder stringBuilder = new StringBuilder();
 
-        for (int Y = 0; Y < Tiles.GetLength(0); Y++)
+        for (int Y = 0; Y < Tiles.GetLength(1); Y++)
         {
-            // Reset eightCount
-            eightCount = 0;
-
-            // Check to see if it's the first line
             if (Y != 0)
             {
-                // Append line delimiter
-                fileBuilder.Append("\n");
+                stringBuilder.Append("\n");
             }
 
-            for (int X = 0; X < Tiles.GetLength(1); X++)
+            for (int X = 0; X < Tiles.GetLength(0); X++)
             {
-                // If amount of bits is too small, keep going
-                if (eightCount < 8)
+                if (X != 0)
                 {
-                    // Increment and add value
-                    eightCount++;
-                    byteBuilder.Append(Tiles[X, Y].Value);
-
-                    // Else if byte length is fulfilled, write it
-                }
-                else
-                {
-                    // Convert and append
-                    fileBuilder.Append(Convert.ToInt32(byteBuilder.ToString(), 2).ToString());
-
-                    // Reset byteBuilder
-                    byteBuilder.Clear();
-
-                    // Append current value
-                    byteBuilder.Append(Tiles[X, Y].Value);
-
-                    // Reset count
-                    eightCount = 1;
-
-                    // Check for more data
-                    if (X != Tiles.GetLength(1) - 1)
-                    {
-                        // Apply delimiter
-                        fileBuilder.Append(".");
-                    }
+                    stringBuilder.Append(",");
                 }
 
-            }
-
-            // If the count is not 0, create leftovers as 0's to finish last byte
-            if (eightCount > 0)
-            {
-                // Loop amount of leftovers
-                for (int leftover = eightCount; leftover < 8; leftover++)
-                {
-                    // Append 0
-                    byteBuilder.Append("0");
-                }
-
-                // Append final byte
-                fileBuilder.Append(Convert.ToInt32(byteBuilder.ToString(), 2).ToString());
-
-                // Reset byteBuilder
-                byteBuilder.Clear();
+                stringBuilder.Append(Tiles[Y, X].Value.ToString());
             }
         }
 
-        // Write out file
-        File.WriteAllText(filePath.ToString(), fileBuilder.ToString());
+        File.WriteAllText(filePath.ToString(), stringBuilder.ToString());
     }
 }

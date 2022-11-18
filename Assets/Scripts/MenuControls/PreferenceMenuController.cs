@@ -66,4 +66,14 @@ public class PreferenceMenuController : MonoBehaviour
         // Set preference
         field.SetValue(null, value);
     }
+
+    public void WritePreferences()
+    {
+        PlayerPreferences.Write();
+    }
+
+    public void ApplyPreferences()
+    {
+        GameObject.Find("PlayerCamBundle").GetComponent<PlayerPartManager>().SetupPreferences();
+    }
 }
