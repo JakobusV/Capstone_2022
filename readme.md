@@ -1,0 +1,2 @@
+Cool aspects found in this project:
+ - When picking up a weapon, a class instance is created from just a string. Not the most complex thing in the world, but just a fun and interesting trick that I enjoyed implementing. 

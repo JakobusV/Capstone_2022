@@ -2,8 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
-public class BasicEnemyControl : MonoBehaviour
+public class BasicEnemyControl : MonoBehaviour, IEnemy
 {
     public GameObject enemy_model;
     [Header("Movement")]
@@ -11,7 +12,8 @@ public class BasicEnemyControl : MonoBehaviour
     public float rotationSpeed;
     public float jumpForce;
     public float dragValue;
-    [Header("Control")]
+    [Header("Misc. Controls")]
+    public float maxHealth;
     public bool isEmoting;
     public float waitTime;
     public bool isAwareOfPlayer;
@@ -30,11 +32,25 @@ public class BasicEnemyControl : MonoBehaviour
 
     private GameObject player;
     private Rigidbody rb;
+    private Slider health_slider;
+    private bool isHit;
+    private bool isDead;
+
+    public float Health { get; set; }
 
     void Start()
     {
-        player = GameObject.Find("Player");
+        // Setup private components
         rb = GetComponent<Rigidbody>();
+        player = GameObject.Find("Player");
+        health_slider = GetComponentInChildren<Slider>();
+
+        // Setup Slider
+        Health = maxHealth;
+        health_slider.maxValue = Health;
+        health_slider.value = Health;
+
+        health_slider.gameObject.SetActive(false);
     }
 
     // Update is called once per frame
@@ -76,6 +92,23 @@ public class BasicEnemyControl : MonoBehaviour
         } else if (!isAwareOfPlayer)
         {
             SlowDown();
+        }
+    }
+
+    private void UpdateHealthBar()
+    {
+        if (health_slider != null)
+        {
+            health_slider.value = Health;
+
+            if (Health <= 0 || Health == maxHealth)
+            {
+                health_slider.gameObject.SetActive(false);
+            }
+            else
+            {
+                health_slider.gameObject.SetActive(true);
+            }
         }
     }
 
@@ -150,6 +183,11 @@ public class BasicEnemyControl : MonoBehaviour
         isEmoting = false;
     }
 
+    private void FinishHit()
+    {
+        isHit = false;
+    }
+
     public void BecomeUnaware()
     {
         isAwareOfPlayer = false;
@@ -178,7 +216,7 @@ public class BasicEnemyControl : MonoBehaviour
     {
         Vector3 flatVel = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
 
-        if (flatVel.magnitude > moveSpeed)
+        if (!isHit && flatVel.magnitude > moveSpeed)
         {
             Vector3 limitedVel = flatVel.normalized * moveSpeed;
             rb.velocity = new Vector3(limitedVel.x, rb.velocity.y, limitedVel.z);
@@ -188,5 +226,39 @@ public class BasicEnemyControl : MonoBehaviour
     private void Jump()
     {
         rb.AddForce(transform.up * jumpForce, ForceMode.Force);
+    }
+
+    public void Die()
+    {
+        isDead = true;
+        Destroy(gameObject);
+    }
+
+    public void TakeDamage(float Damage, float Knockback)
+    {
+        // Allow knockback
+        isHit = true;
+
+        // Do damage 
+        Health -= Damage;
+
+        // Correct Health if it goes out of bounds
+        Health = (Health < 0) ? 0 : Health;
+        Health = (Health > maxHealth) ? maxHealth : Health;
+
+        // Update Health Bar
+        UpdateHealthBar();
+
+        // Check if enemy needs to die
+        if (Health <= 0)
+        {
+            // KILL
+            Die();
+        } 
+        else
+        {
+            // Stop being hit
+            Invoke(nameof(FinishHit), knockback * 0.01f);
+        }
     }
 }

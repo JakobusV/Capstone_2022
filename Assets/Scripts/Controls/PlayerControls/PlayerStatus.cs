@@ -18,6 +18,7 @@ namespace Assets.Scripts.PlayerControls
         public static float Position_X = 5f;
         public static float Position_Y = 0f;
         public static float Position_Z = 5f;
+        public static string Weapon = "";
         public static string Spectacle_Path = "default";
         public static string Spectacle_Index = "0.lff";
 
@@ -67,6 +68,7 @@ namespace Assets.Scripts.PlayerControls
             Position_X = 5f;
             Position_Y = 0f;
             Position_Z = 5f;
+            Weapon = "";
             Spectacle_Path = "default";
             Spectacle_Index = "0.lff";
         }

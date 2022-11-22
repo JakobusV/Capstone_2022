@@ -17,6 +17,7 @@ public class PlayerPartManager : MonoBehaviour
 
     private GameObject GameUI;
     private HealthSliderControl HealthSlider;
+    private GameObject pickupPrompt;
     private GameObject PauseMenu;
     private GameObject DEBUG_UI;
     private GameObject player;
@@ -31,15 +32,19 @@ public class PlayerPartManager : MonoBehaviour
     private bool isCancelRightClick;
     private bool isMovingByGrapple;
     private Vector3 grapple_direction;
+    public List<IPickup> pickupQue = new List<IPickup>();
+    private PlayerAttack player_attack;
 
     public void Start()
     {
         GameUI = GameObject.Find("GameUI");
         HealthSlider = GameObject.Find("HealthSlider").GetComponent<HealthSliderControl>();
+        pickupPrompt = GameObject.Find("PickupPrompt");
         PauseMenu = GameObject.Find("PauseMenu");
         PauseMenu.SetActive(false);
         player = GameObject.Find("Player");
         player_collider = player.GetComponentInChildren<CapsuleCollider>();
+        player_attack = gameObject.GetComponentInChildren<PlayerAttack>();
 
         SetupPreferences();
         SetupStatus();
@@ -104,6 +109,8 @@ public class PlayerPartManager : MonoBehaviour
 
     void Update()
     {
+        TryPickup();
+
         IsPlayerPerforming();
 
         GrapplePhysics();
@@ -123,6 +130,24 @@ public class PlayerPartManager : MonoBehaviour
                 "\tisCharging:" + isCharging +
                 "\tisGrappling:" + isGrappling +
                 "\tisAttached:" + isAttached);
+        }
+    }
+
+    private void TryPickup()
+    {
+        if (pickupQue.Count > 0)
+        {
+            pickupPrompt.SetActive(true);
+
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                pickupQue[0].Pickup();
+                pickupQue.RemoveAt(0);
+            }
+        } 
+        else
+        {
+            pickupPrompt.SetActive(false);
         }
     }
 
@@ -175,7 +200,7 @@ public class PlayerPartManager : MonoBehaviour
                 break;
             case 1:
                 gameObject.GetComponentInChildren<PlayerGrapple>().isCharging = false;
-                gameObject.GetComponentInChildren<PlayerAttack>().TryAttack();
+                player_attack.TryAttack();
                 gameObject.GetComponentInChildren<PlayerMovement>().Attack();
                 break;
             case 2:
@@ -284,7 +309,7 @@ public class PlayerPartManager : MonoBehaviour
         // This can be repetitive but it's easier on the brain in the long run and two extra bools isn't hurting a thing
 
         // Attack
-        isAttacking = gameObject.GetComponentInChildren<PlayerAttack>().isAttacking;
+        isAttacking = player_attack.isAttacking;
 
         // Charging
         isCharging = gameObject.GetComponentInChildren<PlayerGrapple>().isCharging;
@@ -380,6 +405,12 @@ public class PlayerPartManager : MonoBehaviour
                 case "Position_Z":
                     tf.position = new Vector3(tf.position.x, tf.position.y, (float)value);
                     break;
+                case "Weapon":
+                    if (!string.IsNullOrEmpty((string)value))
+                    {
+                        WeaponPickup((string)value);
+                    }
+                    break;
                 default:
                     //Debug.Log("IGNORED: " + name + "=" + value);
                     break;
@@ -418,6 +449,16 @@ public class PlayerPartManager : MonoBehaviour
                 case "Position_Z":
                     field.SetValue(null, tf.position.z);
                     break;
+                case "Weapon":
+                    if (string.IsNullOrEmpty(player_attack.weapon.Name))
+                    {
+                        field.SetValue(null, "");
+                    }
+                    else
+                    {
+                        field.SetValue(null, player_attack.weapon.Name);
+                    }
+                    break;
                 default:
                     Debug.Log("IGNORED: " + name);
                     break;
@@ -445,6 +486,35 @@ public class PlayerPartManager : MonoBehaviour
         } else
         {
             Resume();
+        }
+    }
+
+    public void WeaponPickup(string obj)
+    {
+        if (player_attack.weapon != null)
+        {
+            // Create pickup prefab
+            GameObject old_weapon = Instantiate(Resources.Load("Prefabs/Pickups/" + player_attack.weapon.ModelName + "_Pickup") as GameObject);
+            old_weapon.transform.position = player_attack.dropPosition.position;
+        }
+
+        try
+        {
+            // New weapon
+            IWeapon new_weapon = null;
+
+            // Get type from string
+            Type t = Type.GetType(obj);
+
+            // Get class from type
+            new_weapon = (IWeapon)Activator.CreateInstance(t);
+
+            // Set weapon as class
+            player_attack.weapon = new_weapon;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError(ex);
         }
     }
 }

@@ -12,7 +12,7 @@ public class EnemySpawnControl : MonoBehaviour
     {
         if (Physics.Raycast(transform.position, Vector3.down, out hit, 5000, Ground))
         {
-            GameObject enemy = Instantiate(Resources.Load("Prefabs/BasicEnemy") as GameObject);
+            GameObject enemy = Instantiate(Resources.Load("Prefabs/Enemy/BasicEnemy") as GameObject);
             enemy.transform.position = new Vector3(hit.point.x, hit.point.y + 2, hit.point.z);
         }
 

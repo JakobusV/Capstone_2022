@@ -20,11 +20,14 @@ public class ManagerControl : MonoBehaviour
     public static bool isReading;
     public static string fileName;
     public static bool isPaused;
+    public static bool isNew;
 
     /*public static bool isExisting;
     public static string fileType;*/
     private Spectacle spectacle;
     private GameObject player;
+    private List<IEnemy> enemyList;
+    private System.Random random;
 
     // Start is called before the first frame update
     void Start()
@@ -69,9 +72,6 @@ public class ManagerControl : MonoBehaviour
 
     void Run()
     {
-        // Variables
-        bool isNew;
-
         // Pause
 
         // Create Spectacle
@@ -111,14 +111,54 @@ public class ManagerControl : MonoBehaviour
         // Apply Player
 
         // Find all Spawners and activate them.
-        GameObject[] spawners = GameObject.FindGameObjectsWithTag("Spawner");
+        /*GameObject[] spawners = GameObject.FindGameObjectsWithTag("Spawner");
         foreach (GameObject spawner in spawners)
         {
             spawner.GetComponent<EnemySpawnControl>().Spawn();
+        }*/
+
+        if (isNew)
+        {
+            // Create all enemies
+            enemyList = GenerateListOfEnemies();
+        }
+        else
+        {
+            // Place all enemies
+
         }
 
         // Resume
 
+    }
+
+    private List<IEnemy> GenerateListOfEnemies()
+    {
+        int x_len_cap = spectacle.grid.Tiles.GetLength(0);
+        int y_len_cap = spectacle.grid.Tiles.GetLength(1);
+
+        while (enemyList.Count < 5)
+        {
+            int x_ran = random.Next(0, x_len_cap);
+            int y_ran = random.Next(0, y_len_cap);
+
+            if (spectacle.grid.Tiles[y_ran, x_ran].Value == 0)
+            {
+                //TODO: Spawn enemys to specific designated areas
+            }
+
+            IEnemy new_enemy = CreateEnemy(y_ran, x_ran);
+        }
+
+        return null;
+    }
+
+    private IEnemy CreateEnemy(int y_ran, int x_ran)
+    {
+        GameObject enemy_obj = Instantiate(Resources.Load("Prefabs/Enemy/BasicEnemy") as GameObject);
+        
+
+        return null;
     }
 
     private Algorithm GetAlgorithmByFileType(string fileType)
