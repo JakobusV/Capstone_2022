@@ -11,4 +11,6 @@ public interface IEnemy
     public void Die();
 
     public void TakeDamage(float Damage, float Knockback);
+
+    public void WriteStats();
 }

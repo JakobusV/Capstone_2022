@@ -52,12 +52,13 @@ public class MainMenuController : MonoBehaviour
 
             // Setup manager
             ManagerControl.isReading = false;
-            ManagerControl.fileName = sb.ToString();
+            ManagerControl.fileName = "0" + fileType;
 
             // Setup player status
             PlayerStatus.Default();
-            PlayerStatus.Spectacle_Index = sb.ToString();
             PlayerStatus.Spectacle_Path = file;
+            PlayerStatus.Spectacle_Index = "0";
+            PlayerStatus.Spectacle_Extension = fileType;
             PlayerStatus.Write();
 
             // Load Scene
@@ -89,7 +90,7 @@ public class MainMenuController : MonoBehaviour
 
             // Setup manager
             ManagerControl.isReading = true;
-            ManagerControl.fileName = PlayerStatus.Spectacle_Index;
+            ManagerControl.fileName = PlayerStatus.Spectacle_Index + PlayerStatus.Spectacle_Extension;
 
             // Load Scene
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);

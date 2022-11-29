@@ -12,7 +12,7 @@ public class LFF : Algorithm
     public System.Random Random { get; set; } = new System.Random();
     public Tile[,] Tiles { get; set; }
     public float Chance { get; set; } = 100f;
-    public float Decay { get; set; } = .98f;
+    public float Decay { get; set; } = .998f;
     public Stack<Tile> Deque { get; set; } = new Stack<Tile>();
     private int[] Start { get; set; }
 

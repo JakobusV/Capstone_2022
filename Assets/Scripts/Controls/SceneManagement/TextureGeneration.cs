@@ -51,13 +51,13 @@ public static class TextureGeneration
 
                 switch (ColorValue)
                 {
-                    case 0: 
+                    case 0: // Upper
                         color = Color.green;
                         break;
-                    case 4:
+                    case 4: // Lower
                         color = Color.red;
                         break;
-                    default:
+                    default: // Walls
                         color = Color.blue;
                         break;
                 }

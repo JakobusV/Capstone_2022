@@ -42,4 +42,13 @@ public class SaveBlockController : MonoBehaviour
 
         gameObject.GetComponentInChildren<TMP_Text>().text = value;
     }
+
+    public void Delete()
+    {
+        DirectoryInfo dir = new DirectoryInfo("Saves/" + value);
+
+        dir.Delete(true);
+
+        Destroy(gameObject);
+    }
 }

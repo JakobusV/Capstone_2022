@@ -261,4 +261,9 @@ public class BasicEnemyControl : MonoBehaviour, IEnemy
             Invoke(nameof(FinishHit), knockback * 0.01f);
         }
     }
+
+    public void WriteStats()
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -72,17 +72,24 @@ public class SavesContentController : MonoBehaviour
     {
         string statusPath = saveToDirectoryPath + "/status.mgn";
 
-        Regex re = new Regex(@"Spectacle_Index=(.+?)$", RegexOptions.Multiline);
-        StreamReader sr = new StreamReader(statusPath);
+        Regex re_Index = new Regex(@"Spectacle_Index=(.+?)$", RegexOptions.Multiline);
+        Regex re_Extension = new Regex(@"Spectacle_Extension=(.+?)$", RegexOptions.Multiline);
+        StreamReader sr = new StreamReader(statusPath); //////////////////////////////////////
         string currentLine;
         string result = null;
 
         while ((currentLine = sr.ReadLine()) != null)
         {
-            Match match = re.Match(currentLine);
-            if (match.Success)
+            Match match_in = re_Index.Match(currentLine);
+            Match match_ex = re_Extension.Match(currentLine);
+            if (match_in.Success)
             {
-                result = match.Groups[1].Value;
+                result = match_in.Groups[1].Value;
+            }
+            
+            if (match_ex.Success)
+            {
+                result += match_ex.Groups[1].Value;
             }
         }
 

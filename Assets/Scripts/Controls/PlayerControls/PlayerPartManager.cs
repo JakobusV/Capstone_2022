@@ -450,7 +450,7 @@ public class PlayerPartManager : MonoBehaviour
                     field.SetValue(null, tf.position.z);
                     break;
                 case "Weapon":
-                    if (string.IsNullOrEmpty(player_attack.weapon.Name))
+                    if (player_attack.weapon == null)
                     {
                         field.SetValue(null, "");
                     }
