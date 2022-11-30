@@ -31,6 +31,8 @@ public class Spectacle
         } else if (algorithm.GetType() == typeof(DS))
         {
             grid.GenerateTwoNSquareGrid();
+
+            GameObject.Find("Manager").GetComponent<ManagerControl>().CreateWater();
         } else if (algorithm.GetType() == typeof(BSPR))
         {
             grid.GenerateTwoNSquareGrid();
@@ -45,6 +47,11 @@ public class Spectacle
 
     public void GenerateGridFromFile(string fileName)
     {
+        if (algorithm.GetType() == typeof(DS))
+        {
+            GameObject.Find("Manager").GetComponent<ManagerControl>().CreateWater();
+        }
+
         grid.Tiles = algorithm.Read(fileName);
     }
 

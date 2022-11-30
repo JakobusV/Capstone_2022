@@ -35,6 +35,15 @@ public class ManagerControl : MonoBehaviour
         Run();
     }
 
+    internal void CreateWater()
+    {
+        GameObject water = Instantiate(Resources.Load("Prefabs/Water") as GameObject);
+
+        water.transform.position = new Vector3(spectacle.grid.Tiles.GetLength(0) / 2, -131, spectacle.grid.Tiles.GetLength(1) / 2);
+
+        water.transform.localScale = new Vector3(spectacle.grid.Tiles.GetLength(0), 100, spectacle.grid.Tiles.GetLength(1));
+    }
+
     private void Update()
     {
         PauseControl();
@@ -144,8 +153,6 @@ public class ManagerControl : MonoBehaviour
 
     void Run()
     {
-        // Pause
-
         // Create Spectacle
         spectacle = new Spectacle();
 
@@ -174,7 +181,7 @@ public class ManagerControl : MonoBehaviour
         File.WriteAllBytes(PlayerStatus.GetSavePath() + fileName + ".png", pngBytes);
 
         // Complete
-        spectacle.grid.Build(spectacle.texture);
+        spectacle.grid.Build(spectacle.texture, spectacle.algorithm);
 
         // Make Player
         player = Instantiate(Resources.Load("Prefabs/Player_Camera_Bundle") as GameObject);
@@ -185,22 +192,7 @@ public class ManagerControl : MonoBehaviour
         {
             // Create all enemies
             enemyList = GenerateListOfEnemies();
-
-            // Write to file
-
         }
-        else
-        {
-            // Read from file
-
-
-            // Place all enemies
-
-        }
-
-
-        // Resume
-
     }
 
     private List<IEnemy> GenerateListOfEnemies()
@@ -212,11 +204,6 @@ public class ManagerControl : MonoBehaviour
         {
             int x_ran = random.Next(0, x_len_cap);
             int y_ran = random.Next(0, y_len_cap);
-
-            if (spectacle.grid.Tiles[y_ran, x_ran].Value == 0)
-            {
-                //TODO: Spawn enemys to specific designated areas
-            }
 
             IEnemy new_enemy = CreateEnemy(y_ran, x_ran);
 

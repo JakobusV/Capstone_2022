@@ -45,7 +45,7 @@ public class Grid
         GenerateGameObject();
     }
 
-    public void Build(Texture2D Texture)
+    public void Build(Texture2D Texture, Algorithm algorithm)
     {
         // Get size of grid
         int LengthX = Tiles.GetLength(1);
@@ -61,6 +61,13 @@ public class Grid
         List<int> TileTriangles = new List<int>();
         Vector2[] UVs = new Vector2[LengthX * LengthY];
         Vector3[] TileNormals;
+        int HeightMultiplier = -15;
+
+        // Set HeightMultiplier
+        if (algorithm.GetType() == typeof(DS))
+        {
+             HeightMultiplier = -10;
+        }
 
         // Get Verticies
         for (int X = 0; X < LengthX; X++)
@@ -84,7 +91,7 @@ public class Grid
                 }
 
                 // Add Vertex
-                TileVertices.Add(new Vector3(Y, Tiles[Y, X].Value * -10, X));
+                TileVertices.Add(new Vector3(Y, Tiles[Y, X].Value * HeightMultiplier, X));
 
                 // Add UV
                 UVs[VerticesIndex] = new Vector2(Y / (float)LengthY, X / (float)LengthX);
